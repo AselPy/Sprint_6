@@ -1,80 +1,71 @@
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions
+import allure
+from page_objects.base_page import BasePage
+from locators.locators import MainPageLocators
 
 
-class MainPage:
-    # Кнопки «Заказать»
-    ORDER_BUTTON_HEADER = (
-        By.XPATH,
-        "(//button[normalize-space()='Заказать'])[1]"
-    )
-    ORDER_BUTTON_BOTTOM = (
-        By.XPATH,
-        "(//button[normalize-space()='Заказать'])[last()]"
-    )
+class MainPage(BasePage):
 
-    # Логотипы
-    LOGO_SCOOTER = (
-        By.XPATH,
-        "//a[contains(@class, 'LogoScooter')]"
-    )
-    LOGO_YANDEX = (
-        By.XPATH,
-        "//a[contains(@class, 'LogoYandex')]"
-    )
-
-    # Вопросы и ответы FAQ
-    FAQ_QUESTION = (By.ID, "accordion__heading-{0}")
-    FAQ_ANSWER = (By.ID, "accordion__panel-{0}")
-
-    def __init__(self, driver):
-        self.driver = driver
-
+    @allure.step('Нажать верхнюю кнопку «Заказать»')
     def click_order_button_header(self):
-        WebDriverWait(self.driver, 10).until(
-            expected_conditions.element_to_be_clickable(
-                self.ORDER_BUTTON_HEADER
-            )
-        ).click()
+        self.click_element(MainPageLocators.ORDER_BUTTON_HEADER)
 
+    @allure.step('Нажать нижнюю кнопку «Заказать»')
     def click_order_button_bottom(self):
-        # Закрываем баннер cookie, если он появился
-        cookie_buttons = self.driver.find_elements(
-            By.CSS_SELECTOR,
-            "div[class*='App_CookieConsent'] button"
+        cookie_buttons = self.find_elements(
+            MainPageLocators.COOKIE_BUTTON
         )
 
         if cookie_buttons:
-            cookie_buttons[0].click()
+            self.click_element(MainPageLocators.COOKIE_BUTTON)
 
-        # Находим нижнюю кнопку «Заказать»
-        order_button = self.driver.find_element(
-            *self.ORDER_BUTTON_BOTTOM
-        )
+        self.scroll_to_element(MainPageLocators.ORDER_BUTTON_BOTTOM)
+        self.click_element(MainPageLocators.ORDER_BUTTON_BOTTOM)
 
-        # Прокручиваем страницу к кнопке
-        self.driver.execute_script(
-            "arguments[0].scrollIntoView({block: 'center'});",
-            order_button
-        )
-
-        WebDriverWait(self.driver, 10).until(
-            expected_conditions.element_to_be_clickable(
-                self.ORDER_BUTTON_BOTTOM
-            )
-        ).click()
-
+    @allure.step('Нажать на логотип Самоката')
     def click_logo_scooter(self):
-        WebDriverWait(self.driver, 10).until(
-            expected_conditions.element_to_be_clickable(
-                self.LOGO_SCOOTER
-            )
-        ).click()
+        self.click_element(MainPageLocators.LOGO_SCOOTER)
 
+    @allure.step('Нажать на логотип Яндекса')
     def click_logo_yandex(self):
-        WebDriverWait(self.driver, 10).until(
-            expected_conditions.element_to_be_clickable(
-                self.LOGO_YANDEX
-            )
-        ).click()
+        original_window = self.get_current_window_handle()
+
+        self.click_element(MainPageLocators.LOGO_YANDEX)
+        self.wait_for_window_count(2)
+
+        for window in self.get_window_handles():
+            if window != original_window:
+                self.switch_to_window(window)
+                break
+
+        self.wait_for_url_contains('dzen.ru')
+
+    @allure.step('Открыть ответ на вопрос FAQ')
+    def click_faq_question(self, index):
+        question_locator = (
+            MainPageLocators.FAQ_QUESTION[0],
+            MainPageLocators.FAQ_QUESTION[1].format(index)
+        )
+
+        answer_locator = (
+            MainPageLocators.FAQ_ANSWER[0],
+            MainPageLocators.FAQ_ANSWER[1].format(index)
+        )
+
+        self.scroll_to_element(question_locator)
+        self.click_element_with_js(question_locator)
+        self.wait_for_element(answer_locator)
+
+    @allure.step('Получить ответ FAQ')
+    def get_faq_answer(self, index):
+        answer_locator = (
+            MainPageLocators.FAQ_ANSWER[0],
+            MainPageLocators.FAQ_ANSWER[1].format(index)
+        )
+
+        return self.wait_for_element(answer_locator).text
+
+    @allure.step('Проверить отображение формы заказа')
+    def is_order_form_visible(self):
+        return self.wait_for_element(
+            MainPageLocators.ORDER_FORM_TITLE
+        ).is_displayed()

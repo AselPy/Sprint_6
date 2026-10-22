@@ -1,138 +1,88 @@
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions
+import allure
+from page_objects.base_page import BasePage
+from locators.locators import OrderPageLocators
 
 
-class OrderPage:
-    # Поля первой формы
-    FIRST_NAME = (By.XPATH, "//input[@placeholder='* Имя']")
-    LAST_NAME = (By.XPATH, "//input[@placeholder='* Фамилия']")
-    ADDRESS = (By.XPATH, "//input[@placeholder='* Адрес: куда привезти заказ']")
-    METRO_STATION = (By.XPATH, "//input[@placeholder='* Станция метро']")
-    PHONE = (By.XPATH, "//input[@placeholder='* Телефон: на него позвонит курьер']")
+class OrderPage(BasePage):
 
-    NEXT_BUTTON = (By.XPATH, "//button[text()='Далее']")
-
-    # Поля второй формы
-    RENTAL_DATE = (
-        By.XPATH,
-        "//input[@placeholder='* Когда привезти самокат']"
-    )
-    RENTAL_PERIOD = (By.CLASS_NAME, "Dropdown-control")
-    RENTAL_COMMENT = (
-        By.XPATH,
-        "//input[@placeholder='Комментарий для курьера']"
-    )
-
-    # Цвет самоката
-    BLACK_COLOR = (By.ID, "black")
-    GREY_COLOR = (By.ID, "grey")
-
-    # Кнопки заказа
-    ORDER_BUTTON = (
-        By.XPATH,
-        "(//button[normalize-space()='Заказать'])[last()]"
-    )
-    CONFIRM_BUTTON = (By.XPATH, "//button[normalize-space()='Да']")
-
-    # Сообщение об успешном оформлении
-    ORDER_SUCCESS = (
-        By.XPATH,
-        "//*[contains(text(), 'Заказ оформлен')]"
-    )
-
-    def __init__(self, driver):
-        self.driver = driver
-
+    @allure.step('Заполнить личные данные')
     def fill_personal_data(
         self, first_name, last_name, address, metro_station, phone
     ):
-        self.driver.find_element(*self.FIRST_NAME).send_keys(first_name)
-        self.driver.find_element(*self.LAST_NAME).send_keys(last_name)
-        self.driver.find_element(*self.ADDRESS).send_keys(address)
+        self.send_keys_to_element(
+            OrderPageLocators.FIRST_NAME, first_name
+        )
+        self.send_keys_to_element(
+            OrderPageLocators.LAST_NAME, last_name
+        )
+        self.send_keys_to_element(
+            OrderPageLocators.ADDRESS, address
+        )
 
-        metro = self.driver.find_element(*self.METRO_STATION)
-        metro.click()
-        metro.send_keys(metro_station)
+        self.click_element(OrderPageLocators.METRO_STATION)
+        self.send_keys_to_element(
+            OrderPageLocators.METRO_STATION, metro_station
+        )
 
         station_locator = (
-            By.XPATH,
-            "//button[contains(@class, 'select-search__option') "
-            f"and normalize-space()='{metro_station}']"
+            OrderPageLocators.METRO_STATION_OPTION[0],
+            OrderPageLocators.METRO_STATION_OPTION[1].format(
+                metro_station
+            )
+        )
+        self.click_element(station_locator)
+
+        self.send_keys_to_element(
+            OrderPageLocators.PHONE, phone
         )
 
-        WebDriverWait(self.driver, 10).until(
-            expected_conditions.element_to_be_clickable(station_locator)
-        ).click()
-
-        self.driver.find_element(*self.PHONE).send_keys(phone)
-
+    @allure.step('Нажать кнопку «Далее»')
     def click_next_button(self):
-        WebDriverWait(self.driver, 10).until(
-            expected_conditions.element_to_be_clickable(self.NEXT_BUTTON)
-        ).click()
+        self.click_element(OrderPageLocators.NEXT_BUTTON)
 
-    def fill_rental_data(self, rental_date, rental_period, color, comment):
-        # Открываем календарь
-        date_field = WebDriverWait(self.driver, 10).until(
-            expected_conditions.element_to_be_clickable(self.RENTAL_DATE)
-        )
-        date_field.click()
+    @allure.step('Заполнить данные аренды')
+    def fill_rental_data(
+        self, rental_date, rental_period, color, comment
+    ):
+        self.click_element(OrderPageLocators.RENTAL_DATE)
 
-        # Выбираем день в календаре
         day = int(rental_date.split('.')[0])
 
         day_locator = (
-            By.XPATH,
-            "//div[contains(@class, 'react-datepicker__day') "
-            f"and normalize-space()='{day}' "
-            "and not(contains(@class, "
-            "'react-datepicker__day--outside-month'))]"
+            OrderPageLocators.RENTAL_DAY[0],
+            OrderPageLocators.RENTAL_DAY[1].format(day)
         )
+        self.click_element(day_locator)
 
-        WebDriverWait(self.driver, 10).until(
-            expected_conditions.element_to_be_clickable(day_locator)
-        ).click()
+        self.click_element(OrderPageLocators.RENTAL_PERIOD)
 
-        # Открываем список срока аренды
-        period = WebDriverWait(self.driver, 10).until(
-            expected_conditions.element_to_be_clickable(self.RENTAL_PERIOD)
-        )
-        period.click()
-
-        # Находим и выбираем нужный срок
         period_locator = (
-            By.XPATH,
-            "//div[contains(@class, 'Dropdown-option') "
-            f"and normalize-space()='{rental_period}']"
+            OrderPageLocators.RENTAL_PERIOD_OPTION[0],
+            OrderPageLocators.RENTAL_PERIOD_OPTION[1].format(
+                rental_period
+            )
+        )
+        self.click_element(period_locator)
+
+        if color == 'black':
+            self.click_element(OrderPageLocators.BLACK_COLOR)
+        else:
+            self.click_element(OrderPageLocators.GREY_COLOR)
+
+        self.send_keys_to_element(
+            OrderPageLocators.RENTAL_COMMENT, comment
         )
 
-        WebDriverWait(self.driver, 10).until(
-            expected_conditions.element_to_be_clickable(period_locator)
-        ).click()
-
-        # Выбираем цвет самоката
-        if color == 'black':
-            self.driver.find_element(*self.BLACK_COLOR).click()
-        else:
-            self.driver.find_element(*self.GREY_COLOR).click()
-
-        # Заполняем комментарий
-        self.driver.find_element(*self.RENTAL_COMMENT).send_keys(comment)
-
+    @allure.step('Нажать кнопку «Заказать»')
     def click_order_button(self):
-        WebDriverWait(self.driver, 10).until(
-            expected_conditions.element_to_be_clickable(self.ORDER_BUTTON)
-        ).click()
+        self.click_element(OrderPageLocators.ORDER_BUTTON)
 
+    @allure.step('Подтвердить оформление заказа')
     def confirm_order(self):
-        WebDriverWait(self.driver, 10).until(
-            expected_conditions.element_to_be_clickable(self.CONFIRM_BUTTON)
-        ).click()
+        self.click_element(OrderPageLocators.CONFIRM_BUTTON)
 
+    @allure.step('Дождаться успешного оформления заказа')
     def wait_for_successful_order(self):
-        return WebDriverWait(self.driver, 15).until(
-            expected_conditions.visibility_of_element_located(
-                self.ORDER_SUCCESS
-            )
+        return self.wait_for_element(
+            OrderPageLocators.ORDER_SUCCESS
         )
