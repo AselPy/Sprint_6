@@ -71,8 +71,29 @@ class BasePage:
     def switch_to_window(self, window_handle):
         self.driver.switch_to.window(window_handle)
 
+    @allure.step('Переключиться на новую вкладку')
+    def switch_to_new_window(self, original_window):
+        self.wait_for_window_count(2)
+
+        for window in self.get_window_handles():
+            if window != original_window:
+                self.switch_to_window(window)
+                break
+
     @allure.step('Дождаться адреса, содержащего текст')
     def wait_for_url_contains(self, text):
         WebDriverWait(self.driver, 20).until(
             expected_conditions.url_contains(text)
         )
+
+    @allure.step('Развернуть окно браузера')
+    def maximize_window(self):
+        self.driver.maximize_window()
+
+    @allure.step('Открыть страницу')
+    def open_page(self, url):
+        self.driver.get(url)
+
+    @allure.step('Закрыть браузер')
+    def quit_browser(self):
+        self.driver.quit()

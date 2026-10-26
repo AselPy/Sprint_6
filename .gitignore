@@ -1,21 +1,20 @@
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
+*.pyo
 
-# Pytest и отчёты
+# Pytest
 .pytest_cache/
-allure_results/
-allure-results/
-allure-report/
 
 # Виртуальное окружение
 .venv/
 venv/
 env/
-ENV/
 
-# Логи и временные файлы
+# Временные файлы
 *.log
-*.tmp
 geckodriver.log
+
+# Сырые результаты Allure
+allure_results/
+allure-results/
