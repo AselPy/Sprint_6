@@ -1,37 +1,17 @@
+import allure
 import pytest
+from data import ORDER_DATA
 from page_objects.main_page import MainPage
 from page_objects.order_page import OrderPage
 
 
 class TestOrder:
 
+    @allure.title('Оформление заказа: {first_name} {last_name}')
     @pytest.mark.parametrize(
         'first_name, last_name, address, metro_station, phone, '
         'rental_date, rental_period, color, comment',
-        [
-            (
-                'Самат',
-                'Осмонов',
-                'Кыргызстан, Бишкек, проспект Чуй, 123',
-                'Черкизовская',
-                '89995551234',
-                '30.10.2026',
-                'сутки',
-                'black',
-                'Позвонить перед доставкой'
-            ),
-            (
-                'Айгул',
-                'Абдраимова',
-                'Кыргызстан, Бишкек, улица Манаса, 45',
-                'Сокольники',
-                '89995554321',
-                '31.10.2026',
-                'двое суток',
-                'grey',
-                'Доставить вечером'
-            )
-        ]
+        ORDER_DATA
     )
     def test_create_order(
         self, driver, first_name, last_name, address,
