@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Pytest
+.pytest_cache/
+
+# Виртуальное окружение
+.venv/
+venv/
+env/
+
+# Временные файлы
+*.log
+geckodriver.log
+
+# Сырые результаты Allure
+allure_results/
+allure-results/
